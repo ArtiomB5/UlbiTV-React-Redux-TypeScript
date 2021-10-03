@@ -1,0 +1,61 @@
+1. Создаем store - src/store/index.ts
+export const store = createStore({}, applyMiddleware(thunk));
+параметр 1 - reducer
+
+2. Создание reducer - src/store/reducers/userReducer.ts
+2.1 создание reducer используя createStore
+2.2 передача в createStore, в качестве параметров, state и action
+2.3 реализация в store конструкции switch-case, работающей с action.type:
+switch (action.type) {
+    case 'тут какое-то из значний action.type':
+      break;
+
+    default:
+      break;
+  }
+2.4 создание initialState и присвоение его параметру state функции createStore в созданном ранее store
+
+3. Типизации параметров принимаемых функцией createStore - src/types/user.ts
+3.1 создание типизации для initialState. Указание этой типизации как для initialState
+ так и для возвращаемых функцией userReducer данных
+3.2 создание типизации для action. Возможные варианты action.type будут хранится в перечислении - enum
+
+4. Создание rootReducer - src/store/reducers/index.ts
+4.1 Создание rootReducer, который будет объединять другие redcuer в себе с помощью функции combineReducers
+4.2 Создание экспортного типа roodReducer'a:
+export type rootReducerType = ReturnType<typeof rootReducer>;
+4.3 Передача rootReducer в функцию createStore первым параметром
+
+5. Прокидываем созданный нами store в наше приложение - src/index.tsx
+5.1 Оборачиваем компонентой <Provider></Provider> из библиотеке react-redux компоненту <App/>
+5.2 Компоненте Provider передаем созданный нами store в качестве props <Provider store={store}></Provider>
+
+6.Получение state внутри компоненты, использующей его - src/components/UserList.tsx
+6.1 для получения state используем хук useState: const state = useSelector((stateFP) => stateFP);
+6.2 Хук useState принимаем параметром функцию, которая в свою очередь парметром принимает state
+название этому state может дать любоое. Этот хук вернет рпринятый state.
+state будет представлять из себя объект имеющий в качестве ключей ключи reducer'ов из rootReducer,
+а в качестве значений объект типа UserState
+
+7.Типизация получения state
+7.1 Способ 1. 
+  7.1.1 Импортируем тип rootReducerType
+  7.1.2. Типизируем параметр функции, которую принимает хук useSelector с помощью импортированного типа rootReducerType
+  (см. src/components/UserList.tsx)
+  const state = useSelector((stateFP: rootReducerType) => stateFP.userR);
+7.2 Способ 2.
+  7.2.1 Создаем кастомный хук useTypedSelector
+  7.2.2. Типизируем его с помощью хука TypedUseSelectorHook и типа rootReducerType
+  7.2.3 Присваем нашему хуку useTypedSelector хук useSelector
+  export const useTypedSelector: TypedUseSelectorHook<rootReducerType> = useSelector;
+  7.2.4 Теперь мы будет использовать наш хук useTypedSelector вместо хука useSelector
+
+9.Создания хука для упрощения работы с dispatch и action creators - src/hooks/useActions.ts
+9.1 Создание хука useActions
+9.2 Обхявление константы dispatch с привоением ей вызова функции useDispatch()
+9.3 из хука useActions возвращаем функцию bindActionCreators(), импортированную из redux,
+  в качестве параметров передаем функции UserActionCreators и dispatch
+9.4 Теперь, вместо useDispatch в нужной компоненте используем кастомный хук:
+  const { fetchUsers } = useActions();
+  fetchUsers - единственный action creator, который мы привязали к кастомному хуку
+
